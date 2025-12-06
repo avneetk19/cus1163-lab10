@@ -75,7 +75,7 @@ setup_test_environment() {
 find_world_writable() {
     echo "--- World-Writable Files & Directories ---"
 
-    local count=0
+     count=0
 
     # TODO 1: Find all world-writable files and directories
     #
@@ -114,6 +114,18 @@ find_world_writable() {
     # done < <(find "$TEST_DIR" -perm -002)
 
     # YOUR CODE HERE
+while IFS= read -r item; do
+	perms=$(stat -c "%a" "$item")
+
+	if [ -f "$item" ]; then
+	    echo "[FILE] $item ($perms)"
+	elif [ -d "$item" ]; then
+	    echo  "[DIR] $item ($perms)"
+	fi
+
+((count++))
+done < <(find "$TEST_DIR" -perm -002)
+
 
 
     echo ""
@@ -125,7 +137,7 @@ find_world_writable() {
 find_executable_non_scripts() {
     echo "--- Executable Non-Script Files ---"
 
-    local count=0
+     count=0
 
     # TODO 2: Find files that shouldn't be executable
     #
@@ -159,11 +171,16 @@ find_executable_non_scripts() {
 
     # YOUR CODE HERE
 
-
+while IFS= read -r file;do
+	perms=$(stat -c "%a" "$file")
+	echo "[EXEC] $file ($perms)"
+	((count++))
+    done < <(find "$TEST_DIR" -type f \
+	\( -name "*.html" -o -name "*.css" -o -name "*.txt" -o -name "*.conf" \) \
+	-perm /111)
     echo ""
     echo "Found $count files that shouldn't be executable"
-    echo ""
-    return $count
+    EXECUTABLE_COUNT=$count
 }
 
 #####################################################
@@ -200,6 +217,7 @@ main() {
     echo "Summary:"
     echo "- World-writable items found: $world_writable_count"
     echo "- Improperly executable files found: $executable_count"
+    total =$((WORLD_WRITABLE_COUNT + EXECUTABLE_COUNT))
     echo "- Total security issues: $total_issues"
     echo ""
 
